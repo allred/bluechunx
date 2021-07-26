@@ -1,0 +1,2 @@
+#!/bin/bash
+redis-cli -u redis://rp4-piloto-1
