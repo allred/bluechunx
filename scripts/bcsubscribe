@@ -1,0 +1,2 @@
+#!/bin/bash
+echo 'subscribe bluechunx' | redis-cli -u redis://$BLUECHUNX_REDIS_URL
