@@ -4,11 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"tinygo.org/x/bluetooth"
@@ -41,19 +45,51 @@ func RedisClient() *redis.Client {
 	return rdb
 }
 
+func startHttpServer(wg *sync.WaitGroup) *http.Server {
+    srv := &http.Server{Addr: ":2112"}
+
+    http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        io.WriteString(w, "hello world\n")
+    })
+
+    go func() {
+        defer wg.Done() // let main know we are done cleaning up
+
+        // always returns error. ErrServerClosed on graceful close
+        if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Error().Err(err).Msg("ListenAndServe()")
+        }
+    }()
+
+    // returning reference so caller can call Shutdown()
+    return srv
+}
+
 func main() {
 	bx := make(map[string]string)
 	bxAll := make(map[string]int)
+
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+
+	log.Info().Msg("Starting prometheus http")
+	httpServerExitDone := &sync.WaitGroup{}
+	httpServerExitDone.Add(1)
+    http.Handle("/metrics", promhttp.Handler())
+    srv := startHttpServer(httpServerExitDone)
+	fmt.Printf("srv %v", srv)
+
+    //http.ListenAndServe(":2112", nil)
+
 	err := adapter.Enable()
 	if err != nil {
 		log.Error().Str("ugh", "ojsdf").Msg("adapter enable failed") 
 	}
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
-    log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-	adapter.Enable()
+
 	rdb := RedisClient()
 	pong, err := rdb.Ping(ctx).Result()
 	log.Info().Str("redisPing", pong).Msg("Starting scan...")
+
     err = adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
 		addr := device.Address.String()
 		rssi := device.RSSI
@@ -97,4 +133,8 @@ func main() {
 		log.Error().Str("ohno", "x").Msg("BOY")
 	}
 
+	if err := srv.Shutdown(context.TODO()); err != nil {
+        panic(err) // failure/timeout shutting down the server gracefully
+    }
+    httpServerExitDone.Wait()
 }
