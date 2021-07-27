@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -24,8 +26,23 @@ type BxMessage struct {
 	Rssi int16
 	Epoch int64
 }
-var ctx = context.Background()
-var adapter = bluetooth.DefaultAdapter
+
+var (
+	ctx = context.Background()
+	adapter = bluetooth.DefaultAdapter
+	addrsFound = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "bluechunx_addrs_found_total",
+		Help: "Total addrs found during execution so far",
+	})
+)
+
+func recordMetrics() {
+	go func() {
+		for {
+			time.Sleep(2 * time.Second)
+		}
+	}()
+}
 
 func valmaster(mofo map[string]string) []string {
 	vals := make([]string, 0, len(mofo))
@@ -79,8 +96,6 @@ func main() {
     srv := startHttpServer(httpServerExitDone)
 	fmt.Printf("srv %v", srv)
 
-    //http.ListenAndServe(":2112", nil)
-
 	err := adapter.Enable()
 	if err != nil {
 		log.Error().Str("ugh", "ojsdf").Msg("adapter enable failed") 
@@ -117,6 +132,7 @@ func main() {
 					log.Error().Str("err", "err").Msg("redis publish failed")
 				}
 
+				addrsFound.Inc()
 		    	log.Debug().RawJSON("j", jsonBytes).Msg(strconv.Itoa(len(bxAll)))
 			}
 		}
