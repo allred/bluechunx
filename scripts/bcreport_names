@@ -1,11 +1,12 @@
 #!/bin/bash
 hash_name="bluechunx:$(hostname)"
+path_lolcat="/usr/local/bin/lolcat"
 path_output="$HOME/s/mikeallred.com/pub"
 file_out_html="$path_output/bluechunx.html"
 file_out_json="$path_output/bluechunx.json"
 
 > $file_out_html
-cat <<EOF | redis-cli -u redis://$BLUECHUNX_REDIS_URL | jq -r '.[]' | tee $file_out_json | jq '. | {LName}' | jq -r '.LName' | sort -u | figlet | lolcat -f | aha -b | tee -a $file_out_html
+cat <<EOF | redis-cli -u redis://$BLUECHUNX_REDIS_URL | jq -r '.[]' | tee $file_out_json | jq '. | {LName}' | jq -r '.LName' | sort -u | figlet | $path_lolcat -f | aha -b | tee -a $file_out_html
 eval "local info=redis.call('hgetall',KEYS[1]) local ret={} for i=1,#info,2 do ret[info[i]]=info[i+1] end return cjson.encode(ret)" 1 $hash_name
 EOF
 

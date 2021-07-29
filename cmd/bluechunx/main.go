@@ -93,6 +93,11 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 
+	hname, errH := os.Hostname()
+	if errH != nil {
+			log.Error().Err(errH).Msg("os.Hostname()")
+	}
+
 	log.Info().Msg("Starting prometheus http")
 	httpServerExitDone := &sync.WaitGroup{}
 	httpServerExitDone.Add(1)
@@ -126,7 +131,7 @@ func main() {
 				}
 				//log.Debug().Str("a", addr).Str("r", rssiStr).Str("n", localname).Msg(strconv.Itoa(len(bxAll)))
 
-				_, errR := rdb.HMSet(ctx, "bluechunx:wyvern", addr, jsonBytes).Result()
+				_, errR := rdb.HMSet(ctx, "bluechunx:" + hname, addr, jsonBytes).Result()
 				//fmt.Printf("debu %v\n", hash)
 				if errR != nil {
 					log.Error().Str("err", "err").Msg("redis hmset failed")

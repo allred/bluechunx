@@ -1,0 +1,4 @@
+#!/bin/bash
+while [ 1 ]; do
+go run cmd/bluechunx/main.go
+done
