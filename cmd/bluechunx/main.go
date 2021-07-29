@@ -34,6 +34,10 @@ var (
 		Name: "bluechunx_addrs_found_total",
 		Help: "Total addrs found during execution so far",
 	})
+	namedAddrsFound = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "bluechunx_named_addrs_found_total",
+		Help: "Total named addrs found during execution so far",
+	})
 )
 
 func recordMetrics() {
@@ -142,6 +146,7 @@ func main() {
 			if err != nil {
 				log.Error().Str("err", "x").Msg("json marshal failed")
 			}
+			namedAddrsFound.Inc()
 		    log.Info().RawJSON("bx", jsonString).Msg(strconv.Itoa(len(bx)))
 		}
 	})
