@@ -93,6 +93,21 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
 
+	/*
+	sampled := log.Sample(zerolog.LevelSampler{
+    		DebugSampler: &zerolog.BurstSampler{
+        		Burst: 1,
+        		Period: 10*time.Second,
+			// change this at will
+			// you have the power
+			// did the devs who wrote this even test it?
+        		NextSampler: &zerolog.BasicSampler{N: 1000},
+    	},
+	})
+	*/
+	sampled := log.Sample(&zerolog.BasicSampler{N: 10})
+
+
 	hname, errH := os.Hostname()
 	if errH != nil {
 			log.Error().Err(errH).Msg("os.Hostname()")
@@ -152,7 +167,7 @@ func main() {
 				log.Error().Str("err", "x").Msg("json marshal failed")
 			}
 			namedAddrsFound.Inc()
-		    log.Info().RawJSON("bx", jsonString).Msg(strconv.Itoa(len(bx)))
+		    sampled.Info().RawJSON("bx", jsonString).Msg(strconv.Itoa(len(bx)))
 		}
 	})
 	if err != nil {
