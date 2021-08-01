@@ -7,3 +7,7 @@ be all...
 and then like...
 
 * go run ./cmd/bluechunx/main.go
+
+# also
+
+Bluetooth for Raspberry Pi: FeasyCom FSC-BP119
