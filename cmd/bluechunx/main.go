@@ -21,7 +21,7 @@ import (
 )
 
 type BxMessage struct {
-	Addr string
+	//Addr string
 	LName string
 	Rssi int16
 	Epoch int64
@@ -105,7 +105,7 @@ func main() {
     	},
 	})
 	*/
-	sampled := log.Sample(&zerolog.BasicSampler{N: 10})
+	//sampled := log.Sample(&zerolog.BasicSampler{N: 10})
 
 
 	hname, errH := os.Hostname()
@@ -118,7 +118,8 @@ func main() {
 	httpServerExitDone.Add(1)
     http.Handle("/metrics", promhttp.Handler())
     srv := startHttpServer(httpServerExitDone)
-	fmt.Printf("srv %v", srv)
+    log.Info().Msgf("prometheus: %v", srv)
+	//fmt.Printf("srv %v", srv)
 
 	err := adapter.Enable()
 	if err != nil {
@@ -134,12 +135,12 @@ func main() {
 		rssi := device.RSSI
 		localname := device.LocalName()
 		if _, ok := bxAll[addr]; !ok {
-			bxAll[addr] = 1 
+			bxAll[addr] = 1
 			if addr != "" {
 				//rssiStr := strconv.FormatInt(int64(rssi), 10)
 				now := time.Now()
 				epoch := now.Unix()
-				m := BxMessage{addr, localname, rssi, epoch}
+				m := BxMessage{localname, rssi, epoch}
 				jsonBytes, err := json.Marshal(m)
 				if err != nil {
 					log.Error().Str("err", "x").Msg("json marshal failed")
@@ -157,17 +158,18 @@ func main() {
 				}
 
 				addrsFound.Inc()
-		    	log.Debug().RawJSON("j", jsonBytes).Msg(strconv.Itoa(len(bxAll)))
+				log.Debug().RawJSON(addr, jsonBytes).Msg(strconv.Itoa(len(bxAll)))
+				if localname != "" {
+					bx[addr] = localname
+					jsonBs, err := json.Marshal(valmaster(bx))
+					if err != nil {
+						log.Error().Str("err", "x").Msg("json marshal failed")
+					}
+					namedAddrsFound.Inc()
+					log.Info().RawJSON("bx", jsonBs).Msg(strconv.Itoa(len(bx)))
+				}
+
 			}
-		}
-		if addr != "" && localname != "" {
-			bx[addr] = localname
-			jsonString, err := json.Marshal(valmaster(bx))
-			if err != nil {
-				log.Error().Str("err", "x").Msg("json marshal failed")
-			}
-			namedAddrsFound.Inc()
-		    sampled.Info().RawJSON("bx", jsonString).Msg(strconv.Itoa(len(bx)))
 		}
 	})
 	if err != nil {
