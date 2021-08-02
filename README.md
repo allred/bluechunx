@@ -6,8 +6,10 @@ be all...
 
 and then like...
 
-* go run ./cmd/bluechunx/main.go
+* `go run ./cmd/bluechunx/main.go`
 
 # also
 
-Bluetooth for Raspberry Pi: FeasyCom FSC-BP119
+* Bluetooth for Raspberry Pi: FeasyCom FSC-BP119
+* `sudo apt install bluez-hcidump && hcidump`
+* `hciconfig -a`
