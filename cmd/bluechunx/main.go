@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+    "github.com/docopt/docopt-go"
 	"github.com/go-redis/redis/v8"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -38,6 +39,7 @@ var (
 		Name: "bluechunx_named_addrs_found_total",
 		Help: "Total named addrs found during execution so far",
 	})
+    rdb *redis.Client
 )
 
 func recordMetrics() {
@@ -87,11 +89,23 @@ func startHttpServer(wg *sync.WaitGroup) *http.Server {
 }
 
 func main() {
+    usage := `blah
+Usage:
+  bluechunx [-h] [-r]
+
+Options:
+  -h --help    Show help info.
+  -r           Redis mode.  Send scan results to redis.
+    `
 	bx := make(map[string]string)
 	bxAll := make(map[string]int)
 
+    arguments, _ := docopt.ParseDoc(usage)
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
+    mode_redis, _ := arguments.Bool("-r")
+    log.Debug().Msgf("args: %v", mode_redis)
+    //os.Exit(0)
 
 	/*
 	sampled := log.Sample(zerolog.LevelSampler{
@@ -119,16 +133,19 @@ func main() {
     http.Handle("/metrics", promhttp.Handler())
     srv := startHttpServer(httpServerExitDone)
     log.Info().Msgf("prometheus: %v", srv)
-	//fmt.Printf("srv %v", srv)
 
 	err := adapter.Enable()
+    //log.Info().Msgf("adapter id: %v", api.GetAdapterID())
 	if err != nil {
-		log.Error().Str("ugh", "ojsdf").Msg("adapter enable failed") 
+		log.Error().Msg("adapter.Enable() failed")
 	}
 
-	rdb := RedisClient()
-	pong, err := rdb.Ping(ctx).Result()
-	log.Info().Str("redisPing", pong).Msg("Starting scan...")
+    if mode_redis {
+	    rdb = RedisClient()
+	    pong,_ := rdb.Ping(ctx).Result()
+	    log.Info().Str("redisPing", pong).Msg("Redis server has ponged back.")
+    }
+    log.Info().Msg("-=[[ STARTING adapter.Scan() ]]=-")
 
     err = adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
 		addr := device.Address.String()
@@ -147,15 +164,17 @@ func main() {
 				}
 				//log.Debug().Str("a", addr).Str("r", rssiStr).Str("n", localname).Msg(strconv.Itoa(len(bxAll)))
 
-				_, errR := rdb.HMSet(ctx, "bluechunx:" + hname, addr, jsonBytes).Result()
-				//fmt.Printf("debu %v\n", hash)
-				if errR != nil {
-					log.Error().Str("err", "err").Msg("redis hmset failed")
-				}
-				errRp := rdb.Publish(ctx, "bluechunx", jsonBytes).Err()
-				if errRp != nil {
-					log.Error().Str("err", "err").Msg("redis publish failed")
-				}
+                if mode_redis {
+				    _, errR := rdb.HMSet(ctx, "bluechunx:" + hname, addr, jsonBytes).Result()
+				    //fmt.Printf("debu %v\n", hash)
+				    if errR != nil {
+					    log.Error().Str("err", "err").Msg("redis hmset failed")
+				    }
+				    errRp := rdb.Publish(ctx, "bluechunx", jsonBytes).Err()
+				    if errRp != nil {
+					    log.Error().Str("err", "err").Msg("redis publish failed")
+				    }
+                }
 
 				addrsFound.Inc()
 				log.Debug().RawJSON(addr, jsonBytes).Msg(strconv.Itoa(len(bxAll)))

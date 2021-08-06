@@ -1,4 +1,4 @@
 #!/bin/bash
 while [ 1 ]; do
-go run cmd/bluechunx/main.go
+  go run cmd/bluechunx/main.go -r
 done

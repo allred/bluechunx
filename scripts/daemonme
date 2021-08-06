@@ -1,0 +1,4 @@
+#!/bin/bash
+while [ 1 ]; do
+go run $HOME/gits/bluechunx/cmd/bluechunx
+done
