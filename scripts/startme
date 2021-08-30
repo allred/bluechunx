@@ -1,4 +1,5 @@
 #!/bin/bash
 while [ 1 ]; do
   go run cmd/bluechunx/main.go -r
+  sleep 1
 done

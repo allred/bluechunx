@@ -192,7 +192,7 @@ Options:
 		}
 	})
 	if err != nil {
-		log.Error().Str("ohno", "x").Msg("BOY")
+		log.Error().Msg("Scan startup failed")
 	}
 
 	if err := srv.Shutdown(context.TODO()); err != nil {
