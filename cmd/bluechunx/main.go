@@ -150,29 +150,30 @@ Options:
     err = adapter.Scan(func(adapter *bluetooth.Adapter, device bluetooth.ScanResult) {
 		addr := device.Address.String()
 		rssi := device.RSSI
-		localname := device.LocalName()
+        localname := device.LocalName()
+        now := time.Now()
+		epoch := now.Unix()
+		m := BxMessage{localname, rssi, epoch}
+		jsonBytes, err := json.Marshal(m)
+		if err != nil {
+			log.Error().Str("err", "x").Msg("json marshal failed")
+		}
+        if mode_redis {
+	        errRp := rdb.Publish(ctx, "bluechunx", jsonBytes).Err()
+	        if errRp != nil {
+		        log.Error().Str("err", "err").Msg("redis publish failed")
+	        }
+        }
 		if _, ok := bxAll[addr]; !ok {
 			bxAll[addr] = 1
 			if addr != "" {
 				//rssiStr := strconv.FormatInt(int64(rssi), 10)
-				now := time.Now()
-				epoch := now.Unix()
-				m := BxMessage{localname, rssi, epoch}
-				jsonBytes, err := json.Marshal(m)
-				if err != nil {
-					log.Error().Str("err", "x").Msg("json marshal failed")
-				}
 				//log.Debug().Str("a", addr).Str("r", rssiStr).Str("n", localname).Msg(strconv.Itoa(len(bxAll)))
 
                 if mode_redis {
 				    _, errR := rdb.HMSet(ctx, "bluechunx:" + hname, addr, jsonBytes).Result()
-				    //fmt.Printf("debu %v\n", hash)
 				    if errR != nil {
 					    log.Error().Str("err", "err").Msg("redis hmset failed")
-				    }
-				    errRp := rdb.Publish(ctx, "bluechunx", jsonBytes).Err()
-				    if errRp != nil {
-					    log.Error().Str("err", "err").Msg("redis publish failed")
 				    }
                 }
 
