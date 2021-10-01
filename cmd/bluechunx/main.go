@@ -172,7 +172,6 @@ Options:
 
 
 				addrsFound.Inc()
-				log.Debug().RawJSON(addr, jsonBytes).Msg(strconv.Itoa(len(bxAll)))
 				if localname != "" {
                     if mode_redis {
                         _, errR := rdb.HMSet(ctx, "bluechunx:" + hname, addr, jsonBytes).Result()
@@ -191,8 +190,11 @@ Options:
                     */
 					namedAddrsFound.Inc()
 					//log.Info().RawJSON("bx", jsonBs).Msg(strconv.Itoa(len(bx)))
-					log.Info().Str("n", "names found").Msg(strconv.Itoa(len(bx)))
-				}
+				    log.Info().RawJSON(addr, jsonBytes).Msg(strconv.Itoa(len(bxAll)))
+					//log.Info().Str("n", "names found").Msg(strconv.Itoa(len(bx)))
+				} else {
+				    log.Debug().RawJSON(addr, jsonBytes).Msg(strconv.Itoa(len(bxAll)))
+                }
 
 			}
 		}
