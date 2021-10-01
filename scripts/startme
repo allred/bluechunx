@@ -1,5 +1,7 @@
 #!/bin/bash
+make
 while [ 1 ]; do
-  go run cmd/bluechunx/main.go -r
+  #go run cmd/bluechunx/main.go -r
+  timeout 1h ./bin/bluechunx -r
   sleep 1
 done

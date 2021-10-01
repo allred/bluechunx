@@ -8,7 +8,7 @@ BLUECHUNX_CMD = "./cmd"
 
 
 build:
-	go build -v -o $(BLUECHUNX_BIN) $(BLUECHUNX_CMD)/bluechunx
+	go build -v -o $(BLUECHUNX_BIN)/bluechunx $(BLUECHUNX_CMD)/bluechunx
 
 run:
 	./bin/bluechunx
