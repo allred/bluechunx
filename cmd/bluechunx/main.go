@@ -170,23 +170,28 @@ Options:
 				//rssiStr := strconv.FormatInt(int64(rssi), 10)
 				//log.Debug().Str("a", addr).Str("r", rssiStr).Str("n", localname).Msg(strconv.Itoa(len(bxAll)))
 
-                if mode_redis {
-				    _, errR := rdb.HMSet(ctx, "bluechunx:" + hname, addr, jsonBytes).Result()
-				    if errR != nil {
-					    log.Error().Str("err", "err").Msg("redis hmset failed")
-				    }
-                }
 
 				addrsFound.Inc()
 				log.Debug().RawJSON(addr, jsonBytes).Msg(strconv.Itoa(len(bxAll)))
 				if localname != "" {
+                    if mode_redis {
+                        _, errR := rdb.HMSet(ctx, "bluechunx:" + hname, addr, jsonBytes).Result()
+				        if errR != nil {
+					        log.Error().Str("err", "err").Msg("redis hmset failed")
+				        }
+                    }
+
 					bx[addr] = localname
-					jsonBs, err := json.Marshal(valmaster(bx))
+                    /*
+                    names := valmaster(bx)
+                    jsonBs, err := json.Marshal(names)
 					if err != nil {
 						log.Error().Str("err", "x").Msg("json marshal failed")
 					}
+                    */
 					namedAddrsFound.Inc()
-					log.Info().RawJSON("bx", jsonBs).Msg(strconv.Itoa(len(bx)))
+					//log.Info().RawJSON("bx", jsonBs).Msg(strconv.Itoa(len(bx)))
+					log.Info().Str("n", "names found").Msg(strconv.Itoa(len(bx)))
 				}
 
 			}
