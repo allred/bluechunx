@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+import json
+import os
+import platform
+import redis
+
+def main(host):
+    r = redis.Redis.from_url("redis://" + os.environ['BLUECHUNX_REDIS_URL'])
+    hashname_redis = f"bluechunx:{host}"
+    for k,v in r.hgetall(hashname_redis).items():
+        h_value = json.loads(v)
+        if h_value["LName"] != "":
+            print(f"skipping {k} {h_value}")
+        else:
+            print(f"DELETING {k} {h_value}")
+            r.hdel(hashname_redis, k)
+        #break
+
+if __name__ == '__main__':
+    main(platform.node())
