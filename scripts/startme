@@ -2,6 +2,6 @@
 make
 while [ 1 ]; do
   #go run cmd/bluechunx/main.go -r
-  timeout 1h ./bin/bluechunx -r
+  timeout 3h ./bin/bluechunx -r
   sleep 1
 done
