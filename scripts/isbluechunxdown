@@ -7,7 +7,7 @@ newval=$(redis-cli -u redis://rp4-piloto-1 hlen bluechunx:rp4-piloto-1)
 echo "newval: $newval"
 echo $newval > $outfile
 if [[ $oldval =~ [[:digit:]]  && $newval =~ [[:digit:]]  && $oldval == $newval ]]; then
-    msg_alert="bluechunx stale"
+    msg_alert="bluechunx stale: $newval"
     echo $msg_alert
     $path_sbot "$msg_alert"
 fi
